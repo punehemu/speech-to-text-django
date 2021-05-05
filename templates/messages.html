@@ -1,0 +1,16 @@
+
+{% for obj in chat %}
+{% if obj.user == request.user %}
+  <li class="sent">
+    <img src="http://emilcarlsson.se/assets/mikeross.png" alt="{{ obj.user }}" />
+    <p>{{ obj.message }}</p>
+  </li>
+{% else %}
+  <li class="replies">
+    <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="{{ obj.user }}" />
+    <p>{{ obj.message }}</p>
+  </li>
+{% endif %}
+{% empty %}
+<li class="text-right list-group-item">No messages yet!</li>
+{% endfor %}

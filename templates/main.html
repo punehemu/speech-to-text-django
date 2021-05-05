@@ -1,0 +1,236 @@
+{% load staticfiles %}
+{% load i18n %}
+{% load account %}
+{% load crispy_forms_tags %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Speech to text Using Django</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="WebRTC getUserMedia MediaRecorder API">
+    <script src="https://cdn.WebRTC-Experiment.com/MediaStreamRecorder.js"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'chat/css/bootstrap.min.css' %}">
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600,700,300' rel='stylesheet' type='text/css'>
+    <link type="text/css" rel="stylesheet" href="{% static 'chat/css/style.css' %}">
+    <script src="https://use.typekit.net/hoy3lrg.js"></script>
+    <script>try{Typekit.load({ async: true });}catch(e){}</script>
+    <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css'>
+    <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.2/css/font-awesome.min.css'>
+    <link href="{% static 'chat/css/jquery-fab-button.css' %}" rel="stylesheet">
+
+
+
+  </head>
+  <body>
+    
+    <div id="frame">
+      <div id="sidepanel">
+        <div id="profile">
+          <div class="wrap">
+            <img id="profile-img" src="http://emilcarlsson.se/assets/mikeross.png" class="online" alt="" />
+            {% if user.is_authenticated %}
+            <p>{{ user.username }}</p>
+            {% endif %}
+            <i class="fa fa-chevron-down expand-button" aria-hidden="true"></i>
+            <div id="status-options">
+              <ul>
+                <li id="status-online" class="active"><span class="status-circle"></span> <p>Online</p></li>
+                <li id="status-away"><span class="status-circle"></span> <p>Away</p></li>
+                <li id="status-busy"><span class="status-circle"></span> <p>Busy</p></li>
+                <li id="status-offline"><span class="status-circle"></span> <p>Offline</p></li>
+              </ul>
+            </div>
+            <div id="expanded">
+              <label for="twitter"><i class="fa fa-facebook fa-fw" aria-hidden="true"></i></label>
+              <input name="twitter" type="text" value="mikeross" />
+              <label for="twitter"><i class="fa fa-twitter fa-fw" aria-hidden="true"></i></label>
+              <input name="twitter" type="text" value="ross81" />
+              <label for="twitter"><i class="fa fa-instagram fa-fw" aria-hidden="true"></i></label>
+              <input name="twitter" type="text" value="mike.ross" />
+            </div>
+          </div>
+        </div>
+        <div id="search">
+          <label for=""><i class="fa fa-search" aria-hidden="true"></i></label>
+          <input type="text" placeholder="Search contacts..." />
+        </div>
+        <div id="contacts">
+          <ul>
+            {% for obj in allusers %}
+              {% if request.user != obj %}
+              <li class="contact active">
+                <div class="wrap">
+                  <span class="contact-status busy"></span>
+                  <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
+                  <div class="meta">
+                    <p class="name">{{ obj.username }}</p>
+                    <p class="preview">Demo messages.</p>
+                  </div>
+                </div>
+              </li>
+              {% endif %}
+            {% endfor %}
+            
+            
+          </ul>
+        </div>
+        <div id="bottom-bar">
+          <button id="addcontact"><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i> <span>Add contact</span></button>
+          <button id="settings"><i class="fa fa-cog fa-fw" aria-hidden="true"></i> <span>Settings</span></button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="contact-profile">
+          <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
+          <p>{{ request.user.username }}</p>
+          <div class="social-media" >
+              <a href="/accounts/logout/" class="mr-3">
+                <button type="button" class="btn btn-danger navbar-btn">Log out</button>
+            </a>
+          </div>
+        </div>
+        <div id="msg-list-div" class="messages">
+          <ul id="msg-list">
+            {% for obj in chat %}
+                {% if obj.user == request.user %}
+                  <li class="sent">
+                    <img src="http://emilcarlsson.se/assets/mikeross.png" alt="" />
+                    <p>{{ obj.message }}</p>
+                  </li>
+                {% else %}
+                  <li class="replies">
+                    <img src="http://emilcarlsson.se/assets/harveyspecter.png" alt="" />
+                    <p>{{ obj.message }}</p>
+                  </li>
+                {% endif %}
+            {% empty %}
+                <li class="text-right list-group-item">No messages yet!</li>
+            {% endfor %}
+        </ul>
+        </div>
+        <form id="chat-form" method="post" action="{% url 'chat:post' %}">
+          {% csrf_token %}
+          <div class="message-input">
+            <div class="wrap" id="chat-bottom">
+            <input type="text" id="chat-msg" name="chat-msg" placeholder="Write your message..." />
+            <span id="playButton" class="experiment"><i class="fa fa-play attachment" aria-hidden="true"></i></span>
+            <button class="submit" id="send" type="submit"><i class="fa fa-paper-plane" aria-hidden="true"></i></button>
+            </div>
+          </div>
+        </form>
+        <div class="fixed-action-btn horizontal" style="bottom: 45px; right: 24px;">
+          <a class="btn-floating btn-large red">
+              <i class="large fa fa-play"></i>
+          </a>
+          <ul>
+              <li>
+                  <a id="start-recording" class="btn-floating" data-fabcolor="#45d1ff">
+                      <i class="fa fa-play"></i>
+                  </a>
+              </li>
+              <li>
+                  <a id="stop-recording" class="btn-floating" data-fabcolor="#7345ff">
+                      <i class="fa fa-pause"></i>
+                  </a>
+              </li>
+              
+          </ul>
+      </div>
+      </div>
+      <section class="experiment" style="display: none;" >
+
+        <br>
+        <h3>
+            Send Message: Speech to text
+        </h3>
+        <button id="start-recording">Start</button>
+        <button id="stop-recording" disabled>Stop</button>
+
+        <button id="pause-recording" disabled>Pause</button>
+        <button id="resume-recording" disabled>Resume</button>
+
+    </section> 
+    
+    <section class="experiment">
+        <div id="audios-container" style="display: none;"></div>
+    </section>
+
+    </div>
+    <script src="{% static 'chat/js/jquery-1.12.3.js' %}"></script>
+    <script src="{% static 'chat/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'chat/js/script.js' %}"></script>
+    <script src="{% static 'chat/js/jquery-fab-button.js' %}"></script>
+    <script >
+    $(".messages").animate({ scrollTop: $(document).height() }, "fast");
+
+    $("#profile-img").click(function() {
+      $("#status-options").toggleClass("active");
+    });
+
+    $(".expand-button").click(function() {
+      $("#profile").toggleClass("expanded");
+      $("#contacts").toggleClass("expanded");
+    });
+
+    $("#status-options ul li").click(function() {
+      $("#profile-img").removeClass();
+      $("#status-online").removeClass("active");
+      $("#status-away").removeClass("active");
+      $("#status-busy").removeClass("active");
+      $("#status-offline").removeClass("active");
+      $(this).addClass("active");
+      
+      if($("#status-online").hasClass("active")) {
+        $("#profile-img").addClass("online");
+      } else if ($("#status-away").hasClass("active")) {
+        $("#profile-img").addClass("away");
+      } else if ($("#status-busy").hasClass("active")) {
+        $("#profile-img").addClass("busy");
+      } else if ($("#status-offline").hasClass("active")) {
+        $("#profile-img").addClass("offline");
+      } else {
+        $("#profile-img").removeClass();
+      };
+      
+      $("#status-options").removeClass("active");
+    });
+
+    // function newMessage() {
+    //   message = $(".message-input input").val();
+    //   if($.trim(message) == '') {
+    //     return false;
+    //   }
+    //   $('<li class="sent"><img src="http://emilcarlsson.se/assets/mikeross.png" alt="" /><p>' + message + '</p></li>').appendTo($('.messages ul'));
+    //   $('.message-input input').val(null);
+    //   $('.contact.active .preview').html('<span>You: </span>' + message);
+    //   $(".messages").animate({ scrollTop: $(document).height() }, "fast");
+    // };
+
+    // $('.submit').click(function() {
+    //   newMessage();
+    // });
+
+    $("#playButton").click(function() {
+        $("#playButton").html(
+        $("#playButton").html() == 
+        '<span><i class="fa fa-pause attachment" id="start-recording" aria-hidden="true"></i></span>' ? 
+        '<span><i class="fa fa-play attachment" id="stop-recording" aria-hidden="true"></i></span>' : 
+        '<span><i class="fa fa-pause attachment" id="start-recording" aria-hidden="true"></i></span>');
+    });
+    
+    // $(window).on('keydown', function(e) {
+    //   if (e.which == 13) {
+    //     newMessage();
+    //     return false;
+    //   }
+    // });
+    //# sourceURL=pen.js
+    </script>
+     {% include "chat_script.html" %}
+    
+  </body>
+</html>
