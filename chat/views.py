@@ -59,3 +59,4 @@ def post(request):
 def messages(request):
     chat = Chat.objects.all()
     return render(request, 'messages.html', {'chat': chat})
+

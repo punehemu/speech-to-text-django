@@ -21,3 +21,7 @@ https://github.com/streamproc/MediaStreamRecorder/blob/master/demos/audio-record
 
 I used it for recording audio in the browser as uncompressed pcm audio in .wav containers.
 
+login credentials:
+
+username: demo
+pass : demo@1234
